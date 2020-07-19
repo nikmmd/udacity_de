@@ -46,9 +46,9 @@ def process_song_data(spark, input_data, output_data):
 
     # write artists table to parquet files
     artists_table.write.mode('overwrite').parquet(
-        output_data+'/artists_table.parquet')
+        output_data+'/artists_table')
 
-    print('Saving artists_table.parquet')
+    print('Saving artists_table')
 
 
 def process_log_data(spark, input_data, output_data):
@@ -94,7 +94,7 @@ def process_log_data(spark, input_data, output_data):
     # write time table to parquet files partitioned by year and month
     time_table.write.mode('overwrite').partitionBy(
         "year", "month").parquet(output_data+'/time_table')
-    print('Saving time_table.parquet')
+    print('Saving time_table')
 
     # read in song data to use for songplays table
     song_df = spark.read.parquet(output_data + "/songs_table")
