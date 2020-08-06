@@ -5,18 +5,23 @@ from airflow.utils.decorators import apply_defaults
 
 
 class LoadFactOperator(PostgresOperator):
+    """
+    Extension to PostgresOperator to help load fact tables
+
+    :param redshift_conn_id: Airflow connection id for redshift
+    
+    """
 
     ui_color = '#F98866'
+
     @apply_defaults
     def __init__(self,
-                 sql,
                  redshift_conn_id='redshift',
                  *args, **kwargs):
-
         super(LoadFactOperator, self).__init__(*args, **kwargs)
         self.postgres_conn_id = redshift_conn_id
 
-    def execute(self):
+    def execute(self, **context):
         self.log.info('Executing: %s', self.sql)
         self.hook = PostgresHook(postgres_conn_id=self.postgres_conn_id,
                                  schema=self.database)
