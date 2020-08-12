@@ -1,5 +1,5 @@
 from airflow.hooks.postgres_hook import PostgresHook
-from airflow.hooks import S3Hook
+from airflow.contrib.hooks.aws_hook import AwsHook
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 
@@ -23,6 +23,7 @@ class StageToRedshiftOperator(BaseOperator):
     """
 
     ui_color = '#358140'
+    template_fields = ("s3_key",)
 
     @apply_defaults
     def __init__(self,
@@ -37,9 +38,9 @@ class StageToRedshiftOperator(BaseOperator):
                  *args, **kwargs):
 
         super(StageToRedshiftOperator, self).__init__(*args, **kwargs)
-        # Map params here
-        self.hook = PostgresHook(postgres_conn_id=redshift_conn_id)
-        self.s3 = S3Hook(aws_conn_id=aws_conn_id)
+
+        self.aws_conn_id = aws_conn_id
+        self.redshift_conn_id = redshift_conn_id
         self.schema = schema
         self.table = table
         self.s3_bucket = s3_bucket
@@ -48,7 +49,9 @@ class StageToRedshiftOperator(BaseOperator):
         self.json_path = json_path
 
     def execute(self, context):
-        credentials = self.s3.get_credentials()
+        aws_hook = AwsHook(self.aws_conn_id)
+        credentials = aws_hook.get_credentials()
+        redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
 
         copy_query = """
             COPY {schema}.{table}
@@ -66,5 +69,5 @@ class StageToRedshiftOperator(BaseOperator):
                    )
 
         self.log.info('Executing COPY command...')
-        self.hook.run(copy_query, self.autocommit)
+        redshift.run(copy_query, self.autocommit)
         self.log.info("COPY command complete...")

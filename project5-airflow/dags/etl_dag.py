@@ -11,6 +11,11 @@ from helpers import SqlQueries
 default_args = {
     'owner': 'airflow',
     'start_date': datetime(2020, 8, 1),
+    'depends_on_past': False,
+    'retries': 3,
+    'retry_delay': timedelta(minutes=5),
+    'catchup': False,
+    'email_on_retry': False
 }
 
 dag = DAG('main_etl_dag_v1',
@@ -52,6 +57,7 @@ load_user_dimension_table = LoadDimensionOperator(
     task_id='Load_user_dim_table',
     sql=SqlQueries.user_table_insert,
     provide_context=True,
+    mode="truncate",
     dag=dag
 )
 
@@ -59,6 +65,7 @@ load_song_dimension_table = LoadDimensionOperator(
     task_id='Load_song_dim_table',
     sql=SqlQueries.song_table_insert,
     provide_context=True,
+    mode="truncate",
     dag=dag
 )
 
@@ -66,6 +73,7 @@ load_artist_dimension_table = LoadDimensionOperator(
     task_id='Load_artist_dim_table',
     sql=SqlQueries.artist_table_insert,
     provide_context=True,
+    mode="truncate",
     dag=dag
 )
 
@@ -73,14 +81,14 @@ load_time_dimension_table = LoadDimensionOperator(
     task_id='Load_time_dim_table',
     sql=SqlQueries.time_table_insert,
     provide_context=True,
+    mode="truncate",
     dag=dag
 )
 
 run_quality_checks = DataQualityOperator(
     task_id='Run_data_quality_checks',
-    sql="SELECT COUNT(*) FROM songplays",
     provide_context=True,
-    expectation="> 1",
+    table_info_dict=[{"table_name": "songplays", "not_null": "playid"}],
     dag=dag
 )
 
