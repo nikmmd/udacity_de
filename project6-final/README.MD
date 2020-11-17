@@ -13,11 +13,18 @@ The reporting structure is suited for daily view and analytical dashboards.It su
 
 ## Project structure
 
+### Python:
 - [etl.py](./spark/etl.py) - Contains fact-dimension etl pipeline
 - [model.py](./spark/model.py) - Code to generate target data model and register in Hive metastore.
 - [exploration.ipynb](./spark/exploration.ipynb) - Raw data exploration and data quality check notebook.
-- [analytics.ipynb](./spark/analytics.ipynb) - Target data model quality checks and sample analytics queries.
+- [analytics.ipynb](./spark/analytics.ipynb) - Target data model, quality checks and sample analytics queries.
 - [helpers.py](./spark/helpers.py) - helper udf and sequence generators
+
+### Demo Data
+- [demo_taxi_zones.geojson](./data/demo_taxi_zones.geojson) - Demo taxi geojson data
+- [demo_accident_data.csv](./data/demo_accident_data.csv) - Demo NYC accident data
+- [demo_trip_date.csv](./data/demo_trip_data.csv) - Demo NYC Taxi trip data
+- [taxi_zone_lookup.csv](./data/taxi_zone_lookup.csv) - NYC Taxi Zone id lookup
 
 
 ## Project Datasets
@@ -31,6 +38,7 @@ The reporting structure is suited for daily view and analytical dashboards.It su
     - Update Frequency: Daily
     - Description: Contain information from all police reported motor vehicle collisions in New York City. The police report (MV104-AN) is required to be filled out for collisions where someone is injured or killed, or where there is at least $1000 worth of damage.
     - Each Row: Represents a crash event
+    - Filter: Subset, NYC Yellow Cab, 2020
 3) [NYC Taxi Zones](https://data.cityofnewyork.us/Transportation/NYC-Taxi-Zones/d3c5-ddgc)
    - Source Format: `GeoJSON` 
    - Source Format: `CSV`
@@ -93,9 +101,11 @@ Configure `dwh.cfg` to suit your needs
 cp ./dwh.example.cfg ./dwh.cfg
 ```
 
-If GEO_CACHE=0 the etl pipeline will run a lengthy geo location identification and cache the results for fast future usage.
+`GEO_CACHE=0` parameter in the etl pipeline will run a lengthy geo location identification and cache the results for fast future reuse.
 
-### Python
+After the first time of running ETL you can pass `GEO_CACHE=1` and significantly reduce processing time. 
+
+### Python requirement
 
 ```
 pip install shapely
@@ -105,11 +115,10 @@ pip install shapely
 
 ## 4.1: Create the data model
 
-```
-spark-submit etl.py create_model project6-final/etl.cfg project6-final/sql/reporting.sql
-```
+Create Analytics model by running `analytics.ipynb` notebook. This notebook creates analytics data model, and prepares target tables for ETL. 
 
 ## 4.2: Running the ETL pipeline
+
 
 ```
 spark-submit etl.py project6-final/etl.cfg 
