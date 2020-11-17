@@ -1,0 +1,81 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'This template deploys a single-Master-node EMR cluster.'
+Parameters:
+  ClusterName:
+    Type: String
+    Default: 'EMR-DEV'
+  ZeppelinS3Root:
+    Type: String
+    Description: 'S3 bucket for Zeppelin'
+    Default: de-degree-demo
+  MasterInstanceType:
+    Type: String
+    Default: 'm4.large'
+  LogBucket:
+    Type: String
+    Default: de-degree-demo
+  ReleaseLabel:
+    Type: String
+    Default: 'emr-6.2.0'
+  TerminationProtected:
+    Type: String
+    Default: 'false'
+  EbsRootVolumeSize:
+    Type: String
+    Default: 10
+Resources:
+  EMR:
+    Type: AWS::EMR::Cluster
+    Properties:
+      Applications:
+        - Name: Ganglia
+        - Name: Spark
+        - Name: Zeppelin
+      LogUri: !Join ['', ['s3n://', !Ref LogBucket, '/emr/']]
+      EbsRootVolumeSize: !Ref EbsRootVolumeSize
+      Configurations:
+        - Classification: 'spark'
+          ConfigurationProperties:
+            maximizeResourceAllocation: 'true'
+        - Classification: 'spark-hive-site'
+          ConfigurationProperties:
+            hive.metastore.client.factory.class: 'com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory'
+        - Classification: 'zeppelin-env'
+          Configurations:
+            - Classification: 'export'
+              ConfigurationProperties:
+                ZEPPELIN_NOTEBOOK_S3_BUCKET: !Join ['', [!Ref ZeppelinS3Root]]
+                ZEPPELIN_NOTEBOOK_S3_USER: 'zeppelin'
+                ZEPPELIN_NOTEBOOK_STORAGE: 'org.apache.zeppelin.notebook.repo.S3NotebookRepo'
+                ZEPPELIN_INTERPRETER_DEP_MVNREPO: 'https://repo.maven.apache.org/maven2'
+      ScaleDownBehavior: 'TERMINATE_AT_TASK_COMPLETION'
+      Instances:
+        MasterInstanceGroup:
+          InstanceCount: 1
+          InstanceType: !Ref MasterInstanceType
+          Market: 'ON_DEMAND'
+          Name: 'Master Instance Group'
+          EbsConfiguration:
+            EbsBlockDeviceConfigs:
+              - VolumesPerInstance: 1
+                VolumeSpecification:
+                  SizeInGB: 32
+                  VolumeType: 'gp2'
+        TerminationProtected: !Ref TerminationProtected
+      Name: !Ref ClusterName
+      JobFlowRole: 'EMR_EC2_DefaultRole'
+      ServiceRole: 'EMR_DefaultRole'
+      ReleaseLabel: !Ref ReleaseLabel
+      VisibleToAllUsers: true
+      Steps:
+        - ActionOnFailure: 'CANCEL_AND_WAIT'
+          HadoopJarStep:
+            Args:
+              - 'state-pusher-script'
+            Jar: 'command-runner.jar'
+          Name: 'Setup Hadoop Debugging'
+      Tags:
+        - Key: Project
+          Value: EMR Zeppelin
+        - Key: Environment
+          Value: Dev
