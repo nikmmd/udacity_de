@@ -34,12 +34,12 @@ The aggregate reporting data model is suited for daily view and analytical dashb
    - Update Frequency: Monthly
    - Description: Data of trips taken by taxis and for-hire vehicles in New York City. 
    - Each row: Represents a trip
+   - Filter: Subset, NYC Yellow Cab, 2020
 2) [Motor Vehicle Collisions - Crashes](https://data.cityofnewyork.us/Public-Safety/Motor-Vehicle-Collisions-Crashes/h9gi-nx95)
     - Source Format: `CSV`
     - Update Frequency: Daily
     - Description: Contain information from all police reported motor vehicle collisions in New York City. The police report (MV104-AN) is required to be filled out for collisions where someone is injured or killed, or where there is at least $1000 worth of damage.
     - Each Row: Represents a crash event
-    - Filter: Subset, NYC Yellow Cab, 2020
 3) [NYC Taxi Zones](https://data.cityofnewyork.us/Transportation/NYC-Taxi-Zones/d3c5-ddgc)
    - Source Format: `GeoJSON` 
    - Source Format: `CSV`
